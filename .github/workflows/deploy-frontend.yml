@@ -57,20 +57,22 @@ jobs:
         cat <<EOF > parameters.json
         {
           "commands": [
-            "mkdir -p ~/app",
+            "mkdir -p /home/ec2-user/app",
+            "cd /home/ec2-user/app",
             "aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com",
-            "echo 'version: \"3.8\"' > ~/app/docker-compose.yml",
-            "echo 'services:' >> ~/app/docker-compose.yml",
-            "echo '  front-despacho:' >> ~/app/docker-compose.yml",
-            "echo '    image: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/proyecto-frontend:latest' >> ~/app/docker-compose.yml",
-            "echo '    container_name: front-despacho' >> ~/app/docker-compose.yml",
-            "echo '    restart: always' >> ~/app/docker-compose.yml",
-            "echo '    ports:' >> ~/app/docker-compose.yml",
-            "echo '      - \"80:80\"' >> ~/app/docker-compose.yml",
-            "echo '    environment:' >> ~/app/docker-compose.yml",
-            "echo '      - VITE_API_URL_VENTAS=http://${{ secrets.BACK_PRIVATE_IP }}:8080' >> ~/app/docker-compose.yml",
-            "echo '      - VITE_API_URL_DESPACHOS=http://${{ secrets.BACK_PRIVATE_IP }}:8081' >> ~/app/docker-compose.yml",
-            "cd ~/app && docker-compose pull && docker-compose up -d"
+            "docker-compose down || true",
+            "echo 'version: \"3.8\"' > docker-compose.yml",
+            "echo 'services:' >> docker-compose.yml",
+            "echo '  front-despacho:' >> docker-compose.yml",
+            "echo '    image: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/proyecto-frontend:latest' >> docker-compose.yml",
+            "echo '    container_name: front-despacho' >> docker-compose.yml",
+            "echo '    restart: always' >> docker-compose.yml",
+            "echo '    ports:' >> docker-compose.yml",
+            "echo '      - \"80:80\"' >> docker-compose.yml",
+            "echo '    environment:' >> docker-compose.yml",
+            "echo '      - VITE_API_URL_VENTAS=http://${{ secrets.BACK_PRIVATE_IP }}:8080' >> docker-compose.yml",
+            "echo '      - VITE_API_URL_DESPACHOS=http://${{ secrets.BACK_PRIVATE_IP }}:8081' >> docker-compose.yml",
+            "docker-compose pull && docker-compose up -d"
           ]
         }
         EOF
