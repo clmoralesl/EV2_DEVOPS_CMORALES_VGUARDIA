@@ -7,6 +7,7 @@ on:
       - "init-db/**"
       - "deployment/docker-compose.db.yml"
       - ".github/workflows/deploy-database.yml"
+  workflow_dispatch:
 
 env:
   AWS_REGION: us-east-1
@@ -27,45 +28,52 @@ jobs:
         aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
         aws-region: ${{ env.AWS_REGION }}
 
-    - name: Desplegar Bases de Datos vía SSM
+    - name: Preparar Parámetros de SSM
+      run: |
+        # Creamos el JSON de parámetros evitando saltos de línea problemáticos
+        cat <<EOF > parameters.json
+        {
+          "commands": [
+            "mkdir -p ~/app",
+            "echo 'version: \"3.8\"' > ~/app/docker-compose.yml",
+            "echo 'services:' >> ~/app/docker-compose.yml",
+            "echo '  db-ventas:' >> ~/app/docker-compose.yml",
+            "echo '    image: mysql:8.0' >> ~/app/docker-compose.yml",
+            "echo '    container_name: db-ventas' >> ~/app/docker-compose.yml",
+            "echo '    restart: always' >> ~/app/docker-compose.yml",
+            "echo '    environment:' >> ~/app/docker-compose.yml",
+            "echo '      MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}' >> ~/app/docker-compose.yml",
+            "echo '      MYSQL_DATABASE: ventas_db' >> ~/app/docker-compose.yml",
+            "echo '      MYSQL_USER: ${{ secrets.MYSQL_USER }}' >> ~/app/docker-compose.yml",
+            "echo '      MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}' >> ~/app/docker-compose.yml",
+            "echo '    ports:' >> ~/app/docker-compose.yml",
+            "echo '      - \"3306:3306\"' >> ~/app/docker-compose.yml",
+            "echo '    volumes:' >> ~/app/docker-compose.yml",
+            "echo '      - db_ventas_data:/var/lib/mysql' >> ~/app/docker-compose.yml",
+            "echo '  db-despachos:' >> ~/app/docker-compose.yml",
+            "echo '    image: mysql:8.0' >> ~/app/docker-compose.yml",
+            "echo '    container_name: db-despachos' >> ~/app/docker-compose.yml",
+            "echo '    restart: always' >> ~/app/docker-compose.yml",
+            "echo '    environment:' >> ~/app/docker-compose.yml",
+            "echo '      MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}' >> ~/app/docker-compose.yml",
+            "echo '      MYSQL_DATABASE: despachos_db' >> ~/app/docker-compose.yml",
+            "echo '      MYSQL_USER: ${{ secrets.MYSQL_USER }}' >> ~/app/docker-compose.yml",
+            "echo '      MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}' >> ~/app/docker-compose.yml",
+            "echo '    ports:' >> ~/app/docker-compose.yml",
+            "echo '      - \"3307:3306\"' >> ~/app/docker-compose.yml",
+            "echo '    volumes:' >> ~/app/docker-compose.yml",
+            "echo '      - db_despachos_data:/var/lib/mysql' >> ~/app/docker-compose.yml",
+            "echo 'volumes:' >> ~/app/docker-compose.yml",
+            "echo '  db_ventas_data:' >> ~/app/docker-compose.yml",
+            "echo '  db_despachos_data:' >> ~/app/docker-compose.yml",
+            "cd ~/app && docker-compose up -d"
+          ]
+        }
+        EOF
+
+    - name: Ejecutar Comando SSM
       run: |
         aws ssm send-command \
           --instance-ids ${{ secrets.EC2_DB_INSTANCE_ID }} \
           --document-name "AWS-RunShellScript" \
-          --parameters '{"commands":[
-            "mkdir -p ~/app",
-            "cat <<EOF > ~/app/docker-compose.yml
-        version: \"3.8\"
-        services:
-          db-ventas:
-            image: mysql:8.0
-            container_name: db-ventas
-            restart: always
-            environment:
-              MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
-              MYSQL_DATABASE: ventas_db
-              MYSQL_USER: ${{ secrets.MYSQL_USER }}
-              MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-            ports:
-              - \"3306:3306\"
-            volumes:
-              - db_ventas_data:/var/lib/mysql
-          db-despachos:
-            image: mysql:8.0
-            container_name: db-despachos
-            restart: always
-            environment:
-              MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
-              MYSQL_DATABASE: despachos_db
-              MYSQL_USER: ${{ secrets.MYSQL_USER }}
-              MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-            ports:
-              - \"3307:3306\"
-            volumes:
-              - db_despachos_data:/var/lib/mysql
-        volumes:
-          db_ventas_data:
-          db_despachos_data:
-        EOF",
-            "cd ~/app && docker-compose up -d"
-          ]}'
+          --parameters file://parameters.json

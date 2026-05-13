@@ -7,6 +7,7 @@ on:
       - "front_despacho/**"
       - "deployment/docker-compose.front.yml"
       - ".github/workflows/deploy-frontend.yml"
+  workflow_dispatch:
 
 env:
   AWS_REGION: us-east-1
@@ -51,26 +52,32 @@ jobs:
         aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
         aws-region: ${{ env.AWS_REGION }}
 
-    - name: Desplegar vía SSM
+    - name: Preparar Parámetros de SSM
+      run: |
+        cat <<EOF > parameters.json
+        {
+          "commands": [
+            "mkdir -p ~/app",
+            "aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com",
+            "echo 'version: \"3.8\"' > ~/app/docker-compose.yml",
+            "echo 'services:' >> ~/app/docker-compose.yml",
+            "echo '  front-despacho:' >> ~/app/docker-compose.yml",
+            "echo '    image: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/proyecto-frontend:latest' >> ~/app/docker-compose.yml",
+            "echo '    container_name: front-despacho' >> ~/app/docker-compose.yml",
+            "echo '    restart: always' >> ~/app/docker-compose.yml",
+            "echo '    ports:' >> ~/app/docker-compose.yml",
+            "echo '      - \"80:80\"' >> ~/app/docker-compose.yml",
+            "echo '    environment:' >> ~/app/docker-compose.yml",
+            "echo '      - VITE_API_URL_VENTAS=http://${{ secrets.BACK_PRIVATE_IP }}:8080' >> ~/app/docker-compose.yml",
+            "echo '      - VITE_API_URL_DESPACHOS=http://${{ secrets.BACK_PRIVATE_IP }}:8081' >> ~/app/docker-compose.yml",
+            "cd ~/app && docker-compose pull && docker-compose up -d"
+          ]
+        }
+        EOF
+
+    - name: Ejecutar Comando SSM
       run: |
         aws ssm send-command \
           --instance-ids ${{ secrets.EC2_FRONT_INSTANCE_ID }} \
           --document-name "AWS-RunShellScript" \
-          --parameters '{"commands":[
-            "mkdir -p ~/app",
-            "aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com",
-            "cat <<EOF > ~/app/docker-compose.yml
-        version: \"3.8\"
-        services:
-          front-despacho:
-            image: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/proyecto-frontend:latest
-            container_name: front-despacho
-            restart: always
-            ports:
-              - \"80:80\"
-            environment:
-              - VITE_API_URL_VENTAS=http://${{ secrets.BACK_PRIVATE_IP }}:8080
-              - VITE_API_URL_DESPACHOS=http://${{ secrets.BACK_PRIVATE_IP }}:8081
-        EOF",
-            "cd ~/app && docker-compose pull && docker-compose up -d"
-          ]}'
+          --parameters file://parameters.json

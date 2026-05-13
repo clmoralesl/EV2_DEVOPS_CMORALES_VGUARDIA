@@ -31,3 +31,6 @@ front_despacho/.env*
 # --- Docker ---
 .env
 db.json
+
+# --- Logs ---
+logs/
