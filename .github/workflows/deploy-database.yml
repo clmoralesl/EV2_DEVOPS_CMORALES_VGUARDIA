@@ -33,8 +33,9 @@ jobs:
         cat <<EOF > parameters.json
         {
           "commands": [
-            "mkdir -p /home/ec2-user/app",
-            "cd /home/ec2-user/app",
+            "sudo mkdir -p /opt/app",
+            "sudo chmod 777 /opt/app",
+            "cd /opt/app",
             "docker-compose down -v || true",
             "echo 'version: \"3.8\"' > docker-compose.yml",
             "echo 'services:' >> docker-compose.yml",
