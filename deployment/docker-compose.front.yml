@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  front-despacho:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/proyecto-frontend:latest
+    container_name: front-despacho
+    restart: always
+    ports:
+      - "80:80"
+    environment:
+      - VITE_API_URL_VENTAS=http://${BACK_PRIVATE_IP}:8080
+      - VITE_API_URL_DESPACHOS=http://${BACK_PRIVATE_IP}:8081

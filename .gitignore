@@ -1,0 +1,33 @@
+# --- Terraform ---
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+*.tfvars.json
+.terraform.lock.hcl
+# Pero permitimos los archivos .tf
+!infra-aws/*.tf
+
+# --- IDEs & OS ---
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.log
+
+# --- Node.js (Frontend) ---
+front_despacho/node_modules/
+front_despacho/dist/
+front_despacho/.env*
+
+# --- Java (Backends) ---
+**/target/
+**/*.class
+**/*.jar
+**/*.war
+**/mvnw.cmd
+**/.mvn/wrapper/maven-wrapper.jar
+
+# --- Docker ---
+.env
+db.json

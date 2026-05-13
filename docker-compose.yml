@@ -1,26 +1,36 @@
 version: '3.8'
 
 services:
-  mysql-db:
+  # --- CAPA DE DATOS (Corre en EC2-Databases) ---
+  db-ventas:
     image: mysql:8.0
-    container_name: mysql-db
+    container_name: db-ventas
     environment:
       MYSQL_ROOT_PASSWORD: myrootpassword
-      MYSQL_DATABASE: mydatabase
+      MYSQL_DATABASE: ventas_db
       MYSQL_USER: myuser
       MYSQL_PASSWORD: mypassword
     ports:
       - "3306:3306"
     volumes:
-      - db_data:/var/lib/mysql
-      - ./init-db:/docker-entrypoint-initdb.d
-    healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 10
-    networks:
-      - fullstack-network
+      - db_ventas_data:/var/lib/mysql
+      - ./init-db/seed-ventas.sql:/docker-entrypoint-initdb.d/seed.sql
 
+  db-despachos:
+    image: mysql:8.0
+    container_name: db-despachos
+    environment:
+      MYSQL_ROOT_PASSWORD: myrootpassword
+      MYSQL_DATABASE: despachos_db
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypassword
+    ports:
+      - "3307:3306" # Puerto 3307 externo para no chocar si estan en la misma IP
+    volumes:
+      - db_despachos_data:/var/lib/mysql
+      - ./init-db/seed-despachos.sql:/docker-entrypoint-initdb.d/seed.sql
+
+  # --- CAPA DE APLICACIÓN (Corre en EC2-Backends) ---
   back-ventas:
     build:
       context: ./back-Ventas_SpringBoot/Springboot-API-REST
@@ -29,16 +39,11 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - DB_ENDPOINT=mysql-db
+      - DB_ENDPOINT=db-ventas # En AWS sera la IP privada de la instancia DB
       - DB_PORT=3306
-      - DB_NAME=mydatabase
+      - DB_NAME=ventas_db
       - DB_USERNAME=myuser
       - DB_PASSWORD=mypassword
-    depends_on:
-      mysql-db:
-        condition: service_healthy
-    networks:
-      - fullstack-network
 
   back-despachos:
     build:
@@ -48,17 +53,13 @@ services:
     ports:
       - "8081:8081"
     environment:
-      - DB_ENDPOINT=mysql-db
+      - DB_ENDPOINT=db-despachos # En AWS sera la IP privada de la instancia DB
       - DB_PORT=3306
-      - DB_NAME=mydatabase
+      - DB_NAME=despachos_db
       - DB_USERNAME=myuser
       - DB_PASSWORD=mypassword
-    depends_on:
-      mysql-db:
-        condition: service_healthy
-    networks:
-      - fullstack-network
 
+  # --- CAPA DE PRESENTACIÓN (Corre en EC2-Frontend) ---
   front-despacho:
     build:
       context: ./front_despacho
@@ -66,15 +67,7 @@ services:
     container_name: front-despacho
     ports:
       - "5173:80"
-    depends_on:
-      - back-ventas
-      - back-despachos
-    networks:
-      - fullstack-network
-
-networks:
-  fullstack-network:
-    driver: bridge
 
 volumes:
-  db_data:
+  db_ventas_data:
+  db_despachos_data:
