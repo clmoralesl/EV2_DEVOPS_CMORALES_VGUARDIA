@@ -33,10 +33,16 @@ jobs:
         cat <<EOF > parameters.json
         {
           "commands": [
-            "sudo mkdir -p /opt/app",
-            "sudo chmod 777 /opt/app",
+            "sudo mkdir -p /opt/app/init",
+            "sudo chmod -R 777 /opt/app",
             "cd /opt/app",
             "docker-compose down -v || true",
+            "cat <<'SQL' > init/ventas.sql
+            $(cat init-db/seed-ventas.sql)
+            SQL",
+            "cat <<'SQL' > init/despachos.sql
+            $(cat init-db/seed-despachos.sql)
+            SQL",
             "echo 'version: \"3.8\"' > docker-compose.yml",
             "echo 'services:' >> docker-compose.yml",
             "echo '  db-ventas:' >> docker-compose.yml",
@@ -54,6 +60,7 @@ jobs:
             "echo '      - \"3306:3306\"' >> docker-compose.yml",
             "echo '    volumes:' >> docker-compose.yml",
             "echo '      - db_ventas_data:/var/lib/mysql' >> docker-compose.yml",
+            "echo '      - ./init/ventas.sql:/docker-entrypoint-initdb.d/init.sql' >> docker-compose.yml",
             "echo '  db-despachos:' >> docker-compose.yml",
             "echo '    image: mysql:8.0' >> docker-compose.yml",
             "echo '    container_name: db-despachos' >> docker-compose.yml",
@@ -69,6 +76,7 @@ jobs:
             "echo '      - \"3307:3306\"' >> docker-compose.yml",
             "echo '    volumes:' >> docker-compose.yml",
             "echo '      - db_despachos_data:/var/lib/mysql' >> docker-compose.yml",
+            "echo '      - ./init/despachos.sql:/docker-entrypoint-initdb.d/init.sql' >> docker-compose.yml",
             "echo 'volumes:' >> docker-compose.yml",
             "echo '  db_ventas_data:' >> docker-compose.yml",
             "echo '  db_despachos_data:' >> docker-compose.yml",
