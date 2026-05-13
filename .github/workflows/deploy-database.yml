@@ -42,6 +42,7 @@ jobs:
             "echo '    image: mysql:8.0' >> docker-compose.yml",
             "echo '    container_name: db-ventas' >> docker-compose.yml",
             "echo '    restart: always' >> docker-compose.yml",
+            "echo '    command: --skip-name-resolve' >> docker-compose.yml",
             "echo '    environment:' >> docker-compose.yml",
             "echo '      MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}' >> docker-compose.yml",
             "echo '      MYSQL_DATABASE: ventas_db' >> docker-compose.yml",
@@ -56,6 +57,7 @@ jobs:
             "echo '    image: mysql:8.0' >> docker-compose.yml",
             "echo '    container_name: db-despachos' >> docker-compose.yml",
             "echo '    restart: always' >> docker-compose.yml",
+            "echo '    command: --skip-name-resolve' >> docker-compose.yml",
             "echo '    environment:' >> docker-compose.yml",
             "echo '      MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}' >> docker-compose.yml",
             "echo '      MYSQL_DATABASE: despachos_db' >> docker-compose.yml",
@@ -69,7 +71,10 @@ jobs:
             "echo 'volumes:' >> docker-compose.yml",
             "echo '  db_ventas_data:' >> docker-compose.yml",
             "echo '  db_despachos_data:' >> docker-compose.yml",
-            "docker-compose up -d"
+            "docker-compose up -d",
+            "sleep 20",
+            "docker exec db-ventas mysql -u root -p${{ secrets.MYSQL_ROOT_PASSWORD }} -e \"CREATE USER IF NOT EXISTS 'root'@'10.0.%' IDENTIFIED BY '${{ secrets.MYSQL_ROOT_PASSWORD }}'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'10.0.%' WITH GRANT OPTION; FLUSH PRIVILEGES;\"",
+            "docker exec db-despachos mysql -u root -p${{ secrets.MYSQL_ROOT_PASSWORD }} -e \"CREATE USER IF NOT EXISTS 'root'@'10.0.%' IDENTIFIED BY '${{ secrets.MYSQL_ROOT_PASSWORD }}'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'10.0.%' WITH GRANT OPTION; FLUSH PRIVILEGES;\""
           ]
         }
         EOF
