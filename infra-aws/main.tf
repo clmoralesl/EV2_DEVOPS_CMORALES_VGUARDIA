@@ -162,7 +162,6 @@ resource "aws_security_group_rule" "front_egress" {
   security_group_id = aws_security_group.sg_frontend.id
 }
 
-# --- REGLAS PARA BACKEND ---
 resource "aws_security_group_rule" "back_api" {
   type                     = "ingress"
   from_port                = 8080
@@ -208,7 +207,6 @@ resource "aws_security_group_rule" "back_egress" {
   security_group_id = aws_security_group.sg_backend.id
 }
 
-# --- REGLAS PARA DATABASE ---
 resource "aws_security_group_rule" "db_mysql" {
   type                     = "ingress"
   from_port                = 3306
@@ -230,7 +228,7 @@ resource "aws_security_group_rule" "db_icmp_from_back" {
 resource "aws_security_group_rule" "db_egress" {
   type              = "egress"
   from_port         = 0
-  to_port         = 0
+  to_port           = 0
   protocol          = "-1"
   cidr_blocks       = ["0.0.0.0/0"]
   security_group_id = aws_security_group.sg_database.id
@@ -282,7 +280,6 @@ resource "aws_instance" "db_ec2" {
   tags                   = { Name = "EC2-Databases" }
 }
 
-# --- REPOSITORIOS ECR ---
 resource "aws_ecr_repository" "repo_front" {
   name                 = "proyecto-frontend"
   image_tag_mutability = "MUTABLE"

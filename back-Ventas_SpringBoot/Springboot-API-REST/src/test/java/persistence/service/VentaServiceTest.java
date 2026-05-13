@@ -41,16 +41,16 @@ public class VentaServiceTest {
     @Test
     @DisplayName("Cuando se guarda una venta válida, entonces se persiste correctamente")
     public void whenSavingValidVenta_thenItIsPersistedCorrectly(){
-        //Prepara la simulación
+        
         when(ventaRepository.save(any(Venta.class))).thenReturn(venta);
 
-        //Llama al servicio
+        
         Venta savedVenta = ventaService.saveVenta(venta);
 
-        //Verifica el resultado
+        
         verify(ventaRepository, times(1)).save(venta);
 
-        //Verifica que la venta guardada es la misma que la venta original
+        
         assertNotNull(savedVenta);
         assertEquals(venta.getDireccionCompra(), savedVenta.getDireccionCompra());
         assertEquals(venta.getValorCompra(), savedVenta.getValorCompra());
@@ -61,7 +61,7 @@ public class VentaServiceTest {
     @Test
     @DisplayName("Cuando se guarda una venta, entonces se asigna un ID")
     public void whenVentaIsSavedthenIdIsAssigned(){
-        // Preparar
+        
         Venta ventaToSave = Venta.builder()
                 .direccionCompra("Calle Falsa 123")
                 .valorCompra(1000)
@@ -79,10 +79,10 @@ public class VentaServiceTest {
 
         when(ventaRepository.save(any(Venta.class))).thenReturn(ventaWithId);
 
-        // Ejecutar
+        
         Venta result = ventaService.saveVenta(ventaToSave);
 
-        // Verificar
+        
         verify(ventaRepository).save(ventaToSave);
         assertNotNull(result);
         assertEquals(1L, result.getIdVenta());

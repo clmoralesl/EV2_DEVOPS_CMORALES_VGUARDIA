@@ -19,7 +19,7 @@ export const TableDespachos = () => {
         setDespachos(response.data);
       });
   };
-  // Llamada a la función para obtener los datos cuando el componente se monta
+  
   useEffect(() => {
     despacho();
   }, []);
@@ -100,7 +100,7 @@ export const TableDespachos = () => {
           <FormCierreDespacho
             despacho={despachoSeleccionado}
             onClose={() => {
-              //onclose es un prop que pasa funciones al modal con el form abierto, por ende al cerrarse, se ejecutan esas 2 funciones
+              
               setOpenModal(false), despacho();
             }}
           />

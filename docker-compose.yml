@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # --- CAPA DE DATOS (Corre en EC2-Databases) ---
+  
   db-ventas:
     image: mysql:8.0
     container_name: db-ventas
@@ -25,12 +25,12 @@ services:
       MYSQL_USER: myuser
       MYSQL_PASSWORD: mypassword
     ports:
-      - "3307:3306" # Puerto 3307 externo para no chocar si estan en la misma IP
+      - "3307:3306" 
     volumes:
       - db_despachos_data:/var/lib/mysql
       - ./init-db/seed-despachos.sql:/docker-entrypoint-initdb.d/seed.sql
 
-  # --- CAPA DE APLICACIÓN (Corre en EC2-Backends) ---
+  
   back-ventas:
     build:
       context: ./back-Ventas_SpringBoot/Springboot-API-REST
@@ -39,7 +39,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - DB_ENDPOINT=db-ventas # En AWS sera la IP privada de la instancia DB
+      - DB_ENDPOINT=db-ventas 
       - DB_PORT=3306
       - DB_NAME=ventas_db
       - DB_USERNAME=myuser
@@ -53,13 +53,13 @@ services:
     ports:
       - "8081:8081"
     environment:
-      - DB_ENDPOINT=db-despachos # En AWS sera la IP privada de la instancia DB
+      - DB_ENDPOINT=db-despachos 
       - DB_PORT=3306
       - DB_NAME=despachos_db
       - DB_USERNAME=myuser
       - DB_PASSWORD=mypassword
 
-  # --- CAPA DE PRESENTACIÓN (Corre en EC2-Frontend) ---
+  
   front-despacho:
     build:
       context: ./front_despacho
