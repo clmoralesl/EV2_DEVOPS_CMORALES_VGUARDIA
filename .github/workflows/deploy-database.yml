@@ -1,0 +1,71 @@
+name: Despliegue de Capa de Base de Datos
+
+on:
+  push:
+    branches: [ "deploy" ]
+    paths:
+      - "init-db/**"
+      - "deployment/docker-compose.db.yml"
+      - ".github/workflows/deploy-database.yml"
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  deploy-db:
+    name: Desplegar Base de Datos vía SSM
+    runs-on: ubuntu-latest
+    steps:
+    - name: Descargar Código
+      uses: actions/checkout@v4
+
+    - name: Configurar Credenciales de AWS
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Desplegar Bases de Datos vía SSM
+      run: |
+        aws ssm send-command \
+          --instance-ids ${{ secrets.EC2_DB_INSTANCE_ID }} \
+          --document-name "AWS-RunShellScript" \
+          --parameters '{"commands":[
+            "mkdir -p ~/app",
+            "cat <<EOF > ~/app/docker-compose.yml
+        version: \"3.8\"
+        services:
+          db-ventas:
+            image: mysql:8.0
+            container_name: db-ventas
+            restart: always
+            environment:
+              MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+              MYSQL_DATABASE: ventas_db
+              MYSQL_USER: ${{ secrets.MYSQL_USER }}
+              MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+            ports:
+              - \"3306:3306\"
+            volumes:
+              - db_ventas_data:/var/lib/mysql
+          db-despachos:
+            image: mysql:8.0
+            container_name: db-despachos
+            restart: always
+            environment:
+              MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+              MYSQL_DATABASE: despachos_db
+              MYSQL_USER: ${{ secrets.MYSQL_USER }}
+              MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+            ports:
+              - \"3307:3306\"
+            volumes:
+              - db_despachos_data:/var/lib/mysql
+        volumes:
+          db_ventas_data:
+          db_despachos_data:
+        EOF",
+            "cd ~/app && docker-compose up -d"
+          ]}'

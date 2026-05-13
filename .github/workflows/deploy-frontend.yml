@@ -1,0 +1,76 @@
+name: Despliegue de Capa de Frontend
+
+on:
+  push:
+    branches: [ "deploy" ]
+    paths:
+      - "front_despacho/**"
+      - "deployment/docker-compose.front.yml"
+      - ".github/workflows/deploy-frontend.yml"
+
+env:
+  AWS_REGION: us-east-1
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+
+jobs:
+  build-and-push:
+    name: Construir y Subir Frontend a ECR
+    runs-on: ubuntu-latest
+    steps:
+    - name: Descargar Código
+      uses: actions/checkout@v4
+
+    - name: Configurar Credenciales de AWS
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Iniciar Sesión en Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Construir y Subir Imagen
+      run: |
+        REGISTRY=${{ steps.login-ecr.outputs.registry }}
+        docker build -t $REGISTRY/proyecto-frontend:latest ./front_despacho
+        docker push $REGISTRY/proyecto-frontend:latest
+
+  deploy:
+    name: Desplegar Frontend vía SSM
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+    - name: Configurar Credenciales de AWS
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Desplegar vía SSM
+      run: |
+        aws ssm send-command \
+          --instance-ids ${{ secrets.EC2_FRONT_INSTANCE_ID }} \
+          --document-name "AWS-RunShellScript" \
+          --parameters '{"commands":[
+            "mkdir -p ~/app",
+            "aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com",
+            "cat <<EOF > ~/app/docker-compose.yml
+        version: \"3.8\"
+        services:
+          front-despacho:
+            image: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/proyecto-frontend:latest
+            container_name: front-despacho
+            restart: always
+            ports:
+              - \"80:80\"
+            environment:
+              - VITE_API_URL_VENTAS=http://${{ secrets.BACK_PRIVATE_IP }}:8080
+              - VITE_API_URL_DESPACHOS=http://${{ secrets.BACK_PRIVATE_IP }}:8081
+        EOF",
+            "cd ~/app && docker-compose pull && docker-compose up -d"
+          ]}'
