@@ -135,6 +135,15 @@ resource "aws_security_group_rule" "front_ssh" {
   security_group_id = aws_security_group.sg_frontend.id
 }
 
+resource "aws_security_group_rule" "front_icmp_public" {
+  type              = "ingress"
+  from_port         = -1
+  to_port           = -1
+  protocol          = "icmp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.sg_frontend.id
+}
+
 resource "aws_security_group_rule" "front_icmp_from_back" {
   type                     = "ingress"
   from_port                = -1
@@ -235,6 +244,8 @@ variable "user_data_script" {
               sudo systemctl start docker
               sudo systemctl enable docker
               sudo usermod -a -G docker ec2-user
+              sudo curl -L "https://github.com/docker/compose/releases/download/v2.25.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              sudo chmod +x /usr/local/bin/docker-compose
             EOF
 }
 
