@@ -280,6 +280,24 @@ resource "aws_instance" "db_ec2" {
   tags                   = { Name = "EC2-Databases" }
 }
 
+resource "aws_ecr_repository" "repo_db_ventas" {
+  name                 = "proyecto-db-ventas"
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+}
+
+resource "aws_ecr_repository" "repo_db_despachos" {
+  name                 = "proyecto-db-despachos"
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+}
+
 resource "aws_ecr_repository" "repo_front" {
   name                 = "proyecto-frontend"
   image_tag_mutability = "MUTABLE"

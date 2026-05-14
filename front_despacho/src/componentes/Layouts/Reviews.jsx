@@ -9,6 +9,7 @@ function Reviews() {
           <img
             className="col-span-2 max-h-12 w-full object-contain lg:col-span-1 mx-auto"
             src="https://seeklogo.com/images/A/apple-logo-E3DBF3AE34-seeklogo.com.png"
+            referrerPolicy="no-referrer"
             alt="Transistor"
             width="158"
             height="48"
@@ -17,6 +18,7 @@ function Reviews() {
           <img
             className="col-span-2 max-h-12 w-full object-contain lg:col-span-1 mx-auto"
             src="https://seeklogo.com/images/H/hyper-x-logo-C4B6774A38-seeklogo.com.png"
+            referrerPolicy="no-referrer"
             alt="Tuple"
             width="158"
             height="48"
@@ -24,6 +26,7 @@ function Reviews() {
           <img
             className="col-span-2 max-h-12 w-full object-contain sm:col-start-2 lg:col-span-1 mx-auto"
             src="https://seeklogo.com/images/L/logitech-gaming-logo-B76FC713B0-seeklogo.com.png"
+            referrerPolicy="no-referrer"
             alt="SavvyCal"
             width="158"
             height="48"

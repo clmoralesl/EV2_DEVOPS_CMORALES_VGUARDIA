@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS despacho (
 );
 
 INSERT INTO despacho (id_despacho, fecha_despacho, patente_camion, intento, id_compra, direccion_compra, valor_compra, despachado) VALUES 
-(1, '2026-05-03', 'ABCD-12', 1, 3, 'P Sherman Calle Wallabi 42, Sydney', 45000, 0),
+(100, '2026-06-03', 'DOCK-88', 1, 102, 'Pasaje El Microservicio 303, Arica', 75000, 1);
 (2, '2026-05-05', 'XY-9876', 1, 5, 'Ruta 5 Sur KM 400, Chillán', 85000, 1),
 (3, '2026-05-06', 'BZ-1122', 2, 10, 'Calle Los Alerces 45, Puerto Montt', 22000, 0),
 (4, '2026-05-07', 'TR-4455', 1, 11, 'Av. Alemania 120, Temuco', 31500, 1),
